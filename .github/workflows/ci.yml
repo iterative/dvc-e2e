@@ -40,5 +40,4 @@ jobs:
     - run: >-
         poetry run pytest
         --capture=tee-sys ${{ matrix.test }}
-        --verbose --url git+https://github.com/iterative/dvc
-        --rev main
+        --verbose
