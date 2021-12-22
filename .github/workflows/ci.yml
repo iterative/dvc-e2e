@@ -1,0 +1,44 @@
+name: Tests
+on: push
+jobs:
+  gen:
+    runs-on: ubuntu-latest
+    outputs:
+      tests: ${{ steps.tests.outputs.tests }}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+            python-version: 3.9
+      - name: install reqs
+        run: |
+          pip install poetry pytest
+          poetry install
+      - name: check
+        run: poetry run pytest --co -q
+      - id: tests
+        run: |
+          output=$(poetry run pytest --co -q | awk -v n=2 'NR>n{print line[NR%n]};{line[NR%n]=$0}' | jq -R -s -c 'split("\n")[:-1]')
+          echo "::set-output name=tests::${output}"
+
+  tests:
+    needs: [gen]
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        test: ${{fromJson(needs.gen.outputs.tests)}}
+        os: ["ubuntu-latest", "macos-latest", "windows-latest"]
+    name: run ${{ matrix.test }} on ${{ matrix.os }} with Python ${{ matrix.pyv }}
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - run: pip install poetry
+    - run: poetry install
+    - run: >-
+        poetry run pytest
+        --capture=tee-sys ${{ matrix.test }}
+        --verbose --url git+https://github.com/iterative/dvc
+        --rev main
