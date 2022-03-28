@@ -40,4 +40,5 @@ jobs:
     - run: >-
         poetry run pytest
         --capture=tee-sys ${{ matrix.test }}
-        --verbose
+        --verbose --url git+https://github.com/skshetry/dvc
+        --rev add-aiobotocore-s3 
